@@ -2,6 +2,16 @@
   <div id="app" class="cart-box">
     <div class="cart-main">
       <div class="cart-card">
+        <div class="cart-row">
+          <img class="cart-img" :src="activeImg" />
+          <div class="cart-info">
+            <div class="cart-name">{{ dataSource.trade_name }}</div>
+            <div class="cart-money">¥ {{ price }}</div>
+            <div class="cart-stock" v-show="stock">库存 {{ stock }} 件</div>
+          </div>
+        </div>
+      </div>
+      <div class="cart-card">
         <div class="cart-card-container" v-for="sku in skuListMap.list" :key="sku.attribute_id">
           <div class="cart-card-title">{{sku.attribute_name}}</div>
           <div class="cart-card-box">
@@ -19,11 +29,18 @@
         </div>
       </div>
     </div>
-    <div :class="['cart-footer', { 'disabled': !validateCartStatus.status}]" @click="handleAddToCart">加入购物车</div>
+    <div
+      :class="['cart-footer', { 'disabled': !validateCartStatus.status}]"
+      @click="handleAddToCart"
+    >加入购物车</div>
   </div>
 </template>
 
 <script>
+import DEFAULT_PNG from "@/assets/default.png";
+import SKU_1_PNG from "@/assets/1.png";
+import SKU_2_PNG from "@/assets/2.png";
+
 export default {
   name: "Cart",
   data() {
@@ -34,46 +51,13 @@ export default {
         material_id: 70,
         trade_name:
           "铝艺大门别墅庭院门铝合金对开门家用乡村折叠门电动院子双开大门 支持定做",
-        material_name:
-          "铝艺大门别墅庭院门铝合金对开门家用乡村折叠门电动院子双开大门 支持定做",
-        category_id: 953,
-        serial_number: "3220.269.2486-000002",
-        material_number: "",
-        number_type: 1,
-        brand_id: 7,
-        brand_name: "公牛",
-        source: 1,
-        source_id: "93",
-        source_organization: "enterprise",
-        shelf_state: 1,
-        unit_id: 3,
-        unit_name: "个",
-        has_sku: 1,
-        main_img:
-          "https://alpha-cgsaas.oss-cn-shenzhen.aliyuncs.com/zt22c1dcca-de87-439c-adf5-cacad75d2a18/0e21c817432d79f2c8cbe57d6f5a147a?",
-        img_list: [
-          {
-            uid: "vc-upload-1586057340350-3",
-            name: "d170aa705b671b83.jpg",
-            url:
-              "https://alpha-cgsaas.oss-cn-shenzhen.aliyuncs.com/zt22c1dcca-de87-439c-adf5-cacad75d2a18/0e21c817432d79f2c8cbe57d6f5a147a?"
-          }
-        ],
-        attachment_list: [],
-        material_desc: "",
-        source_material_id: "93",
-        created_by: "",
-        created_on: "2020-04-05 11:30:14",
-        modified_on: "2020-05-29 19:47:47",
-        modified_by: "",
-        is_deleted: 0,
-        category_name: "防火门及防火卷帘",
-        decimal_places: 0,
+        main_img: DEFAULT_PNG,
         sku_list: [
           {
             sku_id: 103,
             material_id: 70,
             sku_price: 179,
+            main_img: SKU_1_PNG,
             sku_prop: [
               {
                 attribute_id: 58,
@@ -94,12 +78,13 @@ export default {
                 attribute_value: "2019"
               }
             ],
-            can_sell: 1
+            stock: 190
           },
           {
             sku_id: 106,
-            material_id: 71,
+            material_id: 70,
             sku_price: 183,
+            main_img: SKU_2_PNG,
             sku_prop: [
               {
                 attribute_id: 58,
@@ -120,18 +105,26 @@ export default {
                 attribute_value: "2020"
               }
             ],
-            can_sell: 1
+            stock: 223
           }
-        ],
-        agreement_id: 5,
-        agreement_name: "202002-202101年度行政类物资战略采购",
-        agreement_code: "JD01",
-        provider_name: "广州晶东贸易有限公司",
-        can_sell: 1
+        ]
       }
     };
   },
   computed: {
+    activeImg() {
+      const defaultImg = this.dataSource.main_img;
+      const skuImg = this.validateCartStatus.item?.main_img;
+      return skuImg || defaultImg;
+    },
+    price() {
+      const sku_price = this.validateCartStatus.item?.sku_price;
+      return sku_price || 0;
+    },
+    stock() {
+      const stock = this.validateCartStatus.item?.stock;
+      return stock || 0;
+    },
     skuListMap() {
       const { sku_list } = this.dataSource;
       // 属性组数据
@@ -209,6 +202,7 @@ export default {
       if (sku_list.length === 1 && (firstSku.sku_prop || []).length === 0) {
         return {
           status: true,
+          item: firstSku,
           params: {
             material_id,
             sku_id: firstSku.sku_id,
@@ -250,6 +244,7 @@ export default {
 
       return {
         status: true,
+        item: findSkuItem,
         params: {
           material_id,
           sku_id: findSkuItem.sku_id,
@@ -309,9 +304,9 @@ export default {
       this.$set(this.activeKey, attrKey, key);
     },
     handleAddToCart() {
-      const { status, params } = this.validateCartStatus;
-      if (status) {
-        console.log(JSON.stringify(params, null, 2))
+      const params = this.validateCartStatus;
+      if (params.status) {
+        console.log(JSON.stringify(params, null, 2));
       }
     }
   }
@@ -340,6 +335,7 @@ export default {
   padding: 16px;
   box-shadow: 0px 2px 10px 0px rgba(93, 153, 240, 0.16);
   border-radius: 2px;
+  margin-bottom: 8px;
 }
 
 .cart-card-container + .cart-card-container {
@@ -398,5 +394,41 @@ export default {
 .cart-footer.disabled {
   background-color: #f3f4f5;
   background-image: none;
+}
+
+.cart-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.cart-row .cart-img {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin-right: 16px;
+}
+
+.cart-row .cart-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.cart-row .cart-money {
+  color: #fe6b5d;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.cart-row .cart-stock {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 14px;
 }
 </style>
