@@ -19,7 +19,7 @@
               <span
                 :class="['cart-card-item', 
                     { 'active': activeKey[sku.attribute_id] === tag.attribute_value_id },
-                    { 'disabled': disabledKey(tag.attribute_value_id) && activeKey[sku.attribute_id] !== tag.attribute_value_id },
+                    { 'disabled': disabledKey(tag.attribute_value_id) },
                   ]"
                 :key="tag.attribute_value_id"
                 @click="handleClick(sku, tag)"
