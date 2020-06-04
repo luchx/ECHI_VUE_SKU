@@ -19,7 +19,7 @@
         </div>
       </div>
     </div>
-    <div :class="['cart-footer', { 'disabled': !validateCartStatus.status}]">加入购物车</div>
+    <div :class="['cart-footer', { 'disabled': !validateCartStatus.status}]" @click="handleAddToCart">加入购物车</div>
   </div>
 </template>
 
@@ -31,7 +31,7 @@ export default {
       activeKey: {},
       cartNumber: 1,
       dataSource: {
-        material_id: 71,
+        material_id: 70,
         trade_name:
           "铝艺大门别墅庭院门铝合金对开门家用乡村折叠门电动院子双开大门 支持定做",
         material_name:
@@ -310,12 +310,8 @@ export default {
     },
     handleAddToCart() {
       const { status, params } = this.validateCartStatus;
-      this.handleClose();
       if (status) {
-        this.$emit("onAdd", {
-          ...this.dataSource,
-          ...params
-        });
+        console.log(JSON.stringify(params, null, 2))
       }
     }
   }
