@@ -54,7 +54,7 @@ export default {
         main_img: DEFAULT_PNG,
         sku_list: [
           {
-            sku_id: 103,
+            sku_id: 101,
             material_id: 70,
             sku_price: 179,
             main_img: SKU_1_PNG,
@@ -69,6 +69,60 @@ export default {
                 attribute_id: 108,
                 attribute_name: "内存",
                 attribute_value_id: 243,
+                attribute_value: "32G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 343,
+                attribute_value: "2019"
+              }
+            ],
+            stock: 190
+          },
+          {
+            sku_id: 102,
+            material_id: 70,
+            sku_price: 179,
+            main_img: SKU_1_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 143,
+                attribute_value: "白色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 243,
+                attribute_value: "32G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 344,
+                attribute_value: "2020"
+              }
+            ],
+            stock: 190
+          },
+          {
+            sku_id: 103,
+            material_id: 70,
+            sku_price: 179,
+            main_img: SKU_1_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 143,
+                attribute_value: "白色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 244,
                 attribute_value: "64G"
               },
               {
@@ -95,8 +149,116 @@ export default {
               {
                 attribute_id: 108,
                 attribute_name: "内存",
-                attribute_value_id: 244,
+                attribute_value_id: 243,
                 attribute_value: "32G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 343,
+                attribute_value: "2019"
+              }
+            ],
+            stock: 223
+          },
+          {
+            sku_id: 109,
+            material_id: 70,
+            sku_price: 183,
+            main_img: SKU_2_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 144,
+                attribute_value: "红色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 244,
+                attribute_value: "64G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 344,
+                attribute_value: "2020"
+              }
+            ],
+            stock: 223
+          },
+          {
+            sku_id: 107,
+            material_id: 70,
+            sku_price: 200,
+            main_img: SKU_2_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 145,
+                attribute_value: "蓝色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 243,
+                attribute_value: "32G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 343,
+                attribute_value: "2019"
+              }
+            ],
+            stock: 223
+          },
+          {
+            sku_id: 108,
+            material_id: 70,
+            sku_price: 200,
+            main_img: SKU_2_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 145,
+                attribute_value: "蓝色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 244,
+                attribute_value: "64G"
+              },
+              {
+                attribute_id: 208,
+                attribute_name: "上市年份",
+                attribute_value_id: 343,
+                attribute_value: "2019"
+              }
+            ],
+            stock: 223
+          },
+          {
+            sku_id: 109,
+            material_id: 70,
+            sku_price: 200,
+            main_img: SKU_2_PNG,
+            sku_prop: [
+              {
+                attribute_id: 58,
+                attribute_name: "颜色",
+                attribute_value_id: 145,
+                attribute_value: "蓝色"
+              },
+              {
+                attribute_id: 108,
+                attribute_name: "内存",
+                attribute_value_id: 244,
+                attribute_value: "64G"
               },
               {
                 attribute_id: 208,
@@ -323,7 +485,8 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  max-width: 750px;
+  margin: 0 auto;
 }
 
 .cart-main {
