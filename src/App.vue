@@ -12,7 +12,7 @@
         </div>
       </div>
       <div class="cart-card">
-        <div class="cart-card-container" v-for="sku in skuListMap.list" :key="sku.attribute_id">
+        <div class="cart-card-container" v-for="sku in skuListMap.attrGroupList" :key="sku.attribute_id">
           <div class="cart-card-title">{{sku.attribute_name}}</div>
           <div class="cart-card-box">
             <template v-for="tag in sku.valueList">
@@ -287,14 +287,14 @@ export default {
       const stock = this.validateCartStatus.item?.stock;
       return stock || 0;
     },
-    skuListMap() {
-      const { sku_list } = this.dataSource;
+    skuListMap(dataSource) {
+      const { sku_list } = dataSource;
       // 属性组数据
       const attributeGroupList = {};
       // 属性 sku_id 组
       const attributeSkuMap = {};
       // 同属性组
-      const sameAttrMap = {};
+      const attrSameKey = {};
       (sku_list || []).forEach(list => {
         const { sku_prop } = list;
         // 获取属性组的 attribute_value_id，用 | 分割
@@ -315,7 +315,7 @@ export default {
               ...prop,
               valueList: []
             };
-            sameAttrMap[prop.attribute_id] = [];
+            attrSameKey[prop.attribute_id] = [];
           }
           // 属性列表
           const existList = attributeGroupList[prop.attribute_id].valueList;
@@ -329,16 +329,17 @@ export default {
               valueInfo
             );
             Array.prototype.push.call(
-              sameAttrMap[prop.attribute_id],
+              attrSameKey[prop.attribute_id],
               prop.attribute_value_id
             );
           }
         });
       });
+      
       return {
-        list: Object.values(attributeGroupList),
-        mapKey: attributeSkuMap,
-        sameAttrMap: sameAttrMap
+        attrGroupList: Object.values(attributeGroupList),
+        existSkuIdKey: attributeSkuMap,
+        attrSameKey: attrSameKey
       };
     },
     validateCartStatus() {
@@ -375,9 +376,9 @@ export default {
 
       // 当前选中的 sku 属性
       const activeKey = this.activeKey;
-      const { mapKey } = this.skuListMap;
+      const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id 以 | 分割, 一维数组,
-      const skuAttrListKey = Object.keys(mapKey);
+      const skuAttrListKey = Object.keys(existSkuIdKey);
       // 取出当前选中的 sku 组，一维数组
       const values = Object.values(activeKey);
       // 判断是否存在 sku_prop 中
@@ -394,7 +395,7 @@ export default {
       }
 
       // 获取当前 sku_id 对应的属性组
-      const findSkuItem = mapKey[findKey];
+      const findSkuItem = existSkuIdKey[findKey];
       // 判断是否可售
       if (findSkuItem.can_sell === 0) {
         return {
@@ -423,16 +424,16 @@ export default {
       );
     },
     disabledKey(attribute_value_id) {
-      const sameAttrKey = Object.values(this.skuListMap.sameAttrMap);
+      const sameAttrKey = Object.values(this.skuListMap.attrSameKey);
       const selectKeys = Object.values(this.activeKey);
       // 获取同组数据
       const findSameKey = sameAttrKey.filter(arr => {
         return selectKeys.find(key => arr.includes(key));
       });
 
-      const { mapKey } = this.skuListMap;
+      const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id
-      const skuAttrListKey = Object.keys(mapKey);
+      const skuAttrListKey = Object.keys(existSkuIdKey);
       // 判断是否存在 SKU 组中
       const findKey = skuAttrListKey.some(arr => {
         const arrMap = arr.split("|");
@@ -452,7 +453,7 @@ export default {
 
       // 存在选项且小于可选项，不在同组属性中，属于 sku 中
       return (
-        !(selectKeys.length < this.skuListMap.list.length - 1) &&
+        !(selectKeys.length < this.skuListMap.attrGroupList.length - 1) &&
         findSameKey.some(arr => !arr.includes(attribute_value_id)) &&
         !findKey
       );
