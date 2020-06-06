@@ -292,7 +292,7 @@ export default {
       // 属性组数据
       const attributeGroupList = {};
       // 属性 sku_id 组
-      const attributeSkuMap = {};
+      const existSkuIdKey = {};
       // 同属性组
       const attrSameKey = {};
       (sku_list || []).forEach(list => {
@@ -301,7 +301,7 @@ export default {
         const attrsIdKeys = (sku_prop || [])
           .map(item => item.attribute_value_id)
           .join("|");
-        attributeSkuMap[attrsIdKeys] = list;
+        existSkuIdKey[attrsIdKeys] = list;
 
         (sku_prop || []).forEach(prop => {
           const valueInfo = {
@@ -338,7 +338,7 @@ export default {
       
       return {
         attrGroupList: Object.values(attributeGroupList),
-        existSkuIdKey: attributeSkuMap,
+        existSkuIdKey: existSkuIdKey,
         attrSameKey: attrSameKey
       };
     },
@@ -426,6 +426,10 @@ export default {
     disabledKey(attribute_value_id) {
       const sameAttrKey = Object.values(this.skuListMap.attrSameKey);
       const selectKeys = Object.values(this.activeKey);
+      // 存在选项且小于可选项，不满足匹配规则，直接返回 false
+      if (selectKeys.length < this.skuListMap.attrGroupList.length - 1) {
+        return false;
+      }
       // 获取同组数据
       const findSameKey = sameAttrKey.filter(arr => {
         return selectKeys.find(key => arr.includes(key));
@@ -451,9 +455,8 @@ export default {
         ]);
       });
 
-      // 存在选项且小于可选项，不在同组属性中，属于 sku 中
+      // 不在同组属性中，属于 sku 中
       return (
-        !(selectKeys.length < this.skuListMap.attrGroupList.length - 1) &&
         findSameKey.some(arr => !arr.includes(attribute_value_id)) &&
         !findKey
       );
