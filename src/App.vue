@@ -290,8 +290,8 @@ export default {
       const stock = this.validateCartStatus.item?.stock;
       return stock || 0;
     },
-    skuListMap(dataSource) {
-      const { sku_list } = dataSource;
+    skuListMap() {
+      const { sku_list } = this.dataSource;
       // 属性组数据
       const attributeGroupList = {};
       // 属性 sku_id 组
@@ -338,6 +338,12 @@ export default {
           }
         });
       });
+
+      console.log({
+        attrGroupList: Object.values(attributeGroupList),
+        existSkuIdKey: existSkuIdKey,
+        attrSameKey: attrSameKey
+      })
 
       return {
         attrGroupList: Object.values(attributeGroupList),
