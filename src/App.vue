@@ -386,13 +386,13 @@ export default {
       const activeKey = this.activeKey;
       const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id 以 | 分割, 一维数组,
-      const skuAttrListKey = Object.keys(existSkuIdKey);
+      const existSkuGroup = Object.keys(existSkuIdKey);
       // 取出当前选中的 sku 组，一维数组
       const values = Object.values(activeKey);
       // 判断是否存在 sku_prop 中
-      const findKey = skuAttrListKey.find(arr => {
-        const arrMap = arr.split("|");
-        return this.arrayIsEqual(arrMap, values);
+      const findKey = existSkuGroup.find(arr => {
+        const attrGroup = arr.split("|");
+        return this.arrayIsEqual(attrGroup, values);
       });
       const selectActiveKeys = Object.keys(activeKey);
       if (!findKey || selectActiveKeys.length === 0) {
@@ -439,33 +439,33 @@ export default {
         return false;
       }
       // 获取同组数据
-      const findSameKey = sameAttrKey.filter(arr => {
+      const filterSameKey = sameAttrKey.filter(arr => {
         return selectKeys.find(key => arr.includes(key));
       });
 
       const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id
-      const skuAttrListKey = Object.keys(existSkuIdKey);
+      const existSkuGroup = Object.keys(existSkuIdKey);
       // 判断是否存在 SKU 组中
-      const findKey = skuAttrListKey.some(arr => {
-        const arrMap = arr.split("|");
+      const hasInSku = existSkuGroup.some(arr => {
+        const attrGroup = arr.split("|");
         // 去除与当前 attribute_value_id 匹配的同组数据
         const aloneKeys = selectKeys.filter(key => {
           // 获取同组数据
-          const sameGroupKey = findSameKey.filter(arr =>
+          const sameGroupKey = filterSameKey.filter(arr =>
             arr.includes(attribute_value_id)
           );
-          return !sameGroupKey.some(skKey => skKey.includes(key));
+          return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
         });
 
-        return this.arrayIsEqual(arrMap, [
+        return this.arrayIsEqual(attrGroup, [
           ...new Set([...aloneKeys, attribute_value_id])
         ]);
       });
 
       // 不在同组属性中，属于 sku 中
       return (
-        findSameKey.some(arr => !arr.includes(attribute_value_id)) && !findKey
+        filterSameKey.some(arr => !arr.includes(attribute_value_id)) && !hasInSku
       );
     },
     handleClick(sku, tag) {
