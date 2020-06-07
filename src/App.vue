@@ -32,6 +32,10 @@
           </div>
         </div>
       </div>
+      <div class="cart-card" v-show="validateCartStatus.status">
+        <p>当前已选择：</p>
+        <pre>{{JSON.stringify(validateCartStatus.item, null, 2)}}</pre>
+      </div>
     </div>
     <div
       :class="['cart-footer', { 'disabled': !validateCartStatus.status}]"
@@ -53,7 +57,8 @@ export default {
       cartNumber: 1,
       dataSource: {
         material_id: 70,
-        trade_name: "Apple iPhone 11 (A2223) 128GB 黑色 移动联通电信4G手机 双卡双待",
+        trade_name:
+          "Apple iPhone 11 (A2223) 128GB 黑色 移动联通电信4G手机 双卡双待",
         main_img: DEFAULT_PNG,
         sku_list: [
           {
@@ -339,12 +344,6 @@ export default {
         });
       });
 
-      console.log({
-        attrGroupList: Object.values(attributeGroupList),
-        existSkuIdKey: existSkuIdKey,
-        attrSameKey: attrSameKey
-      })
-
       return {
         attrGroupList: Object.values(attributeGroupList),
         existSkuIdKey: existSkuIdKey,
@@ -504,6 +503,8 @@ export default {
 .cart-main {
   padding: 12px;
   flex: 1;
+  overflow: hidden;
+  overflow-y: auto;
 }
 
 .cart-card {
