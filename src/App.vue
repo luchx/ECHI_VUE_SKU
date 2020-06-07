@@ -12,7 +12,11 @@
         </div>
       </div>
       <div class="cart-card">
-        <div class="cart-card-container" v-for="sku in skuListMap.attrGroupList" :key="sku.attribute_id">
+        <div
+          class="cart-card-container"
+          v-for="sku in skuListMap.attrGroupList"
+          :key="sku.attribute_id"
+        >
           <div class="cart-card-title">{{sku.attribute_name}}</div>
           <div class="cart-card-box">
             <template v-for="tag in sku.valueList">
@@ -49,8 +53,7 @@ export default {
       cartNumber: 1,
       dataSource: {
         material_id: 70,
-        trade_name:
-          "铝艺大门别墅庭院门铝合金对开门家用乡村折叠门电动院子双开大门 支持定做",
+        trade_name: "Apple iPhone 11 (A2223) 128GB 黑色 移动联通电信4G手机 双卡双待",
         main_img: DEFAULT_PNG,
         sku_list: [
           {
@@ -335,7 +338,7 @@ export default {
           }
         });
       });
-      
+
       return {
         attrGroupList: Object.values(attributeGroupList),
         existSkuIdKey: existSkuIdKey,
@@ -457,8 +460,7 @@ export default {
 
       // 不在同组属性中，属于 sku 中
       return (
-        findSameKey.some(arr => !arr.includes(attribute_value_id)) &&
-        !findKey
+        findSameKey.some(arr => !arr.includes(attribute_value_id)) && !findKey
       );
     },
     handleClick(sku, tag) {
