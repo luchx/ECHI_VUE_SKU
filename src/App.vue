@@ -432,14 +432,14 @@ export default {
       );
     },
     disabledKey(attribute_value_id) {
-      const sameAttrKey = Object.values(this.skuListMap.attrSameKey);
+      const attrSameKey = Object.values(this.skuListMap.attrSameKey);
       const selectKeys = Object.values(this.activeKey);
       // 存在选项且小于可选项，不满足匹配规则，直接返回 false
       if (selectKeys.length < this.skuListMap.attrGroupList.length - 1) {
         return false;
       }
       // 获取同组数据
-      const filterSameKey = sameAttrKey.filter(arr => {
+      const filterSameKey = attrSameKey.filter(arr => {
         return selectKeys.find(key => arr.includes(key));
       });
 
