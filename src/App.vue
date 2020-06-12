@@ -434,14 +434,25 @@ export default {
     disabledKey(attribute_value_id) {
       const attrSameKey = Object.values(this.skuListMap.attrSameKey);
       const selectKeys = Object.values(this.activeKey);
+      const validLen = this.skuListMap.attrGroupList.length;
       // 存在选项且小于可选项，不满足匹配规则，直接返回 false
-      if (selectKeys.length < this.skuListMap.attrGroupList.length - 1) {
+      if (selectKeys.length < validLen - 1) {
         return false;
       }
       // 获取同组数据
       const filterSameKey = attrSameKey.filter(arr => {
         return selectKeys.find(key => arr.includes(key));
       });
+
+      // 获取同组数据
+      const sameGroupKey = filterSameKey.filter(arr =>
+        arr.includes(attribute_value_id)
+      );
+
+      // 存在同组数据，且选项未选完
+      if (selectKeys.length !== validLen && sameGroupKey.length) {
+        return false
+      }
 
       const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id
@@ -451,10 +462,6 @@ export default {
         const attrGroup = arr.split("|");
         // 去除与当前 attribute_value_id 匹配的同组数据
         const aloneKeys = selectKeys.filter(key => {
-          // 获取同组数据
-          const sameGroupKey = filterSameKey.filter(arr =>
-            arr.includes(attribute_value_id)
-          );
           return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
         });
 
@@ -463,17 +470,19 @@ export default {
         ]);
       });
 
-      // 不在同组属性中，属于 sku 中
-      return (
-        filterSameKey.some(arr => !arr.includes(attribute_value_id)) && !hasInSku
-      );
+      // 不在存在 sku 中
+      return !hasInSku;
     },
     handleClick(sku, tag) {
       if (this.disabledKey(tag.attribute_value_id)) {
-        this.activeKey = {};
+        return;
       }
       const key = tag.attribute_value_id;
       const attrKey = sku.attribute_id;
+      if (this.activeKey[attrKey] === key) {
+        this.$delete(this.activeKey, attrKey);
+        return;
+      }
       this.$set(this.activeKey, attrKey, key);
     },
     handleAddToCart() {
