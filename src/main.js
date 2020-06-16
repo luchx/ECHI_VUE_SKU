@@ -1,8 +1,18 @@
-import Vue from 'vue'
-import App from './App.vue'
+import Vue from 'vue';
+import App from './App';
+import { router } from './router';
 
-Vue.config.productionTip = false
+import Vant from 'vant';
+import 'vant/lib/index.css';
+
+console.log({
+  Vant
+})
+
+Vue.use(Vant);
 
 new Vue({
-  render: h => h(App),
-}).$mount('#app')
+  router,
+  el: '#app',
+  render: h => h(App)
+});
