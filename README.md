@@ -234,9 +234,78 @@
 
 ## 二、先前准备
 
-> 当我们拿到这样一份数据我们需要先进行数据格式化：
+> 当我们拿到这样一份数据我们需要先进行数据格式化，并输出形成以下数据：
+
+```javascript
+// 在 computed 中对数据进行输出，并得到三分数据：
+// attrGroupList
+// existSkuIdKey
+// attrSameKey
+
+skuListMap() {
+  const { sku_list } = this.dataSource;
+  // 属性组数据
+  const attributeGroupList = {};
+  // 属性 sku_id 组
+  const existSkuIdKey = {};
+  // 同属性组
+  const attrSameKey = {};
+  (sku_list || []).forEach(list => {
+    const { sku_prop } = list;
+    // 获取属性组的 attribute_value_id，排序后用 | 分割
+    const attrsIdKeys = (sku_prop || [])
+    .map(item => item.attribute_value_id)
+    .sort((a, b) => a - b)
+    .join("|");
+
+    existSkuIdKey[attrsIdKeys] = list;
+
+    (sku_prop || []).forEach(prop => {
+      const valueInfo = {
+        attribute_value_id: prop.attribute_value_id,
+        attribute_value: prop.attribute_value
+      };
+      const hasAttrId = attributeGroupList[prop.attribute_id];
+      // 属性组里不存在则新增
+      if (hasAttrId === undefined) {
+        attributeGroupList[prop.attribute_id] = {
+          ...prop,
+          valueList: []
+        };
+        attrSameKey[prop.attribute_id] = [];
+      }
+      // 属性列表
+      const existList = attributeGroupList[prop.attribute_id].valueList;
+      // 判断 attribute_value_id 是否已存在属性组, 防止同一 attribute_value_id 多次添加
+      const hasExistAttrId = existList.some(
+        item => item.attribute_value_id === prop.attribute_value_id
+      );
+      if (!hasExistAttrId) {
+        Array.prototype.push.call(
+          attributeGroupList[prop.attribute_id].valueList,
+          valueInfo
+        );
+        Array.prototype.push.call(
+          attrSameKey[prop.attribute_id],
+          prop.attribute_value_id
+        );
+      }
+    });
+  });
+
+  const attrGroupList = Object.values(attributeGroupList);
+
+  return {
+    attrGroupList,
+    existSkuIdKey,
+    attrSameKey
+  };
+}
+```
 
 ### 1. 定义一个数组存储规格列表展示的数据：attrGroupList
+
+> 根据后端返回的数据进行格式化，并输出以下格式，用于渲染规格列表
 
 ```javascript
 [
@@ -372,14 +441,145 @@
 }
 ```
 
-## 三、代码实现
+## 三、SKU 禁用判断
+
+> 校验规则：
+>
+> 1. 当选项小于当前 SKU 项 - 1，不禁用选项
+> 1. 同一属性组的选项不禁用
+> 1. 满足匹配条件，则通过 existSkuIdKey 进行匹配
+
+```javascript
+// 在 methods 中定义一个方法，接受一个 attribute_value_id 进行判断，并返回 Boolean
+
+disabledKey(attribute_value_id) {
+  const attrSameKey = Object.values(this.skuListMap.attrSameKey);
+  const selectKeys = Object.values(this.activeKey);
+  const validLen = this.skuListMap.attrGroupList.length;
+  // 存在选项且小于可选项，不满足匹配规则，直接返回 false
+  if (selectKeys.length < validLen - 1) {
+    return false;
+  }
+  // 获取同组数据
+  const filterSameKey = attrSameKey.filter(arr => {
+    return selectKeys.find(key => arr.includes(key));
+  });
+
+  // 获取同组数据
+  const sameGroupKey = filterSameKey.filter(arr =>
+   arr.includes(attribute_value_id)
+  );
+
+  // 存在同组数据，且选项未选完
+  if (selectKeys.length !== validLen && sameGroupKey.length) {
+    return false;
+  }
+
+  const { existSkuIdKey } = this.skuListMap;
+  // 取出 attribute_value_id
+  const existSkuGroup = Object.keys(existSkuIdKey);
+  // 去除与当前 attribute_value_id 匹配的同组数据
+  const aloneKeys = selectKeys.filter(key => {
+    return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
+  });
+  const currentGroup = [...aloneKeys, attribute_value_id];
+  const attrGroup = currentGroup.sort((a, b) => a - b).join("|");
+  // 判断是否存在 SKU 组中
+  const hasInSku = existSkuGroup.some(skuGroup => {
+    return attrGroup === skuGroup;
+  });
+
+  // 不在存在 sku 中
+  return !hasInSku;
+}
+```
+
+## 四、判断购物车选项状态，并返回选中结果
+
+```javascript
+validateCartStatus() {
+  const { material_id, sku_list } = this.dataSource;
+  const cartNumber = this.cartNumber;
+  if (typeof cartNumber !== "number" || cartNumber < 1) {
+    return {
+      status: false,
+      params: {}
+    };
+  }
+
+  if (!sku_list || sku_list.length === 0) {
+    // TODO: 未定义场景（异常）
+    return {
+      status: false,
+      params: {}
+    };
+  }
+
+  const firstSku = sku_list[0];
+  // 如果只存在一条 sku 记录，则默认选取
+  if (sku_list.length === 1 && (firstSku.sku_prop || []).length === 0) {
+    return {
+      status: true,
+      item: firstSku,
+      params: {
+        material_id,
+        sku_id: firstSku.sku_id,
+        quantity: cartNumber
+      }
+    };
+  }
+
+  // 当前选中的 sku 属性
+  const activeKey = this.activeKey;
+  const { existSkuIdKey } = this.skuListMap;
+  // 取出 attribute_value_id 以 | 分割, 一维数组,
+  const existSkuGroup = Object.keys(existSkuIdKey);
+  // 取出当前选中的 sku 组，一维数组
+  const values = Object.values(activeKey);
+  // 判断是否存在 sku_prop 中
+  const findKey = existSkuGroup.find(skuGroup => {
+    const attrGroup = values.sort((a, b) => a - b).join("|");
+    return attrGroup === skuGroup;
+  });
+  const selectActiveKeys = Object.keys(activeKey);
+  if (!findKey || selectActiveKeys.length === 0) {
+    return {
+      status: false,
+      params: {}
+    };
+  }
+
+  // 获取当前 sku_id 对应的属性组
+  const findSkuItem = existSkuIdKey[findKey];
+  // 判断是否可售
+  if (findSkuItem.can_sell === 0) {
+    return {
+      status: false,
+      title: "区域不可售",
+      params: {}
+    };
+  }
+
+  return {
+    status: true,
+    item: findSkuItem,
+    params: {
+      material_id,
+      sku_id: findSkuItem.sku_id,
+      quantity: cartNumber
+    }
+  };
+}
+```
+
+## 五、代码实现
 
 > 具体代码实现请前往 [github 查看](https://github.com/luchx/VUE_CART_SKU)，或点击下方图标查看
 
-[![codeSandbox.svg](https://cdn.nlark.com/yuque/0/2020/svg/373912/1591508056037-fc5b8a9d-5c64-4f24-ad74-1d6c8ffeae8b.svg#align=left&display=inline&height=42&margin=%5Bobject%20Object%5D&originHeight=42&originWidth=201&size=0&status=done&style=none&width=201)](https://codesandbox.io/s/vue-cart-sku-299nt?fontsize=14&hidenavigation=1&theme=dark)
+[![codeSandbox.svg](https://cdn.nlark.com/yuque/0/2020/svg/373912/1591508056037-fc5b8a9d-5c64-4f24-ad74-1d6c8ffeae8b.svg#align=left&display=inline&height=42&margin=%5Bobject%20Object%5D&originHeight=42&originWidth=201&size=0&status=done&style=none&width=201#align=left&display=inline&height=42&margin=%5Bobject%20Object%5D&originHeight=42&originWidth=201&status=done&style=none&width=201#align=left&display=inline&height=42&margin=%5Bobject%20Object%5D&originHeight=42&originWidth=201&status=done&style=none&width=201)](https://codesandbox.io/s/vue-cart-sku-299nt?fontsize=14&hidenavigation=1&theme=dark)
 
-## 四、最终效果
+## 六、最终效果
 
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591506721696-3abb7a89-f569-445a-a84d-889e432a06d8.png#align=left&display=inline&height=696&margin=%5Bobject%20Object%5D&name=image.png&originHeight=696&originWidth=401&size=52490&status=done&style=none&width=401)
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591507235477-0333b109-9b1c-4f1c-9f78-96d69552ee1b.png#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&name=image.png&originHeight=688&originWidth=395&size=62118&status=done&style=none&width=395)
-![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591507849846-bfa08971-6213-4fd5-b865-abf37404756a.png#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&name=image.png&originHeight=688&originWidth=399&size=37091&status=done&style=none&width=399)
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591506721696-3abb7a89-f569-445a-a84d-889e432a06d8.png#align=left&display=inline&height=696&margin=%5Bobject%20Object%5D&name=image.png&originHeight=696&originWidth=401&size=52490&status=done&style=none&width=401#align=left&display=inline&height=696&margin=%5Bobject%20Object%5D&originHeight=696&originWidth=401&status=done&style=none&width=401#align=left&display=inline&height=696&margin=%5Bobject%20Object%5D&originHeight=696&originWidth=401&status=done&style=none&width=401)
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591507235477-0333b109-9b1c-4f1c-9f78-96d69552ee1b.png#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&name=image.png&originHeight=688&originWidth=395&size=62118&status=done&style=none&width=395#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&originHeight=688&originWidth=395&status=done&style=none&width=395#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&originHeight=688&originWidth=395&status=done&style=none&width=395)
+![image.png](https://cdn.nlark.com/yuque/0/2020/png/373912/1591507849846-bfa08971-6213-4fd5-b865-abf37404756a.png#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&name=image.png&originHeight=688&originWidth=399&size=37091&status=done&style=none&width=399#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&originHeight=688&originWidth=399&status=done&style=none&width=399#align=left&display=inline&height=688&margin=%5Bobject%20Object%5D&originHeight=688&originWidth=399&status=done&style=none&width=399)
