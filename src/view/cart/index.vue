@@ -305,10 +305,12 @@ export default {
       const attrSameKey = {};
       (sku_list || []).forEach(list => {
         const { sku_prop } = list;
-        // 获取属性组的 attribute_value_id，用 | 分割
+        // 获取属性组的 attribute_value_id，排序后用 | 分割
         const attrsIdKeys = (sku_prop || [])
           .map(item => item.attribute_value_id)
+          .sort((a, b) => a - b)
           .join("|");
+
         existSkuIdKey[attrsIdKeys] = list;
 
         (sku_prop || []).forEach(prop => {
@@ -344,10 +346,12 @@ export default {
         });
       });
 
+      const attrGroupList = Object.values(attributeGroupList);
+
       return {
-        attrGroupList: Object.values(attributeGroupList),
-        existSkuIdKey: existSkuIdKey,
-        attrSameKey: attrSameKey
+        attrGroupList,
+        existSkuIdKey,
+        attrSameKey
       };
     },
     validateCartStatus() {
@@ -390,9 +394,9 @@ export default {
       // 取出当前选中的 sku 组，一维数组
       const values = Object.values(activeKey);
       // 判断是否存在 sku_prop 中
-      const findKey = existSkuGroup.find(arr => {
-        const attrGroup = arr.split("|");
-        return this.arrayIsEqual(attrGroup, values);
+      const findKey = existSkuGroup.find(skuGroup => {
+        const attrGroup = values.sort((a, b) => a - b).join("|");
+        return attrGroup === skuGroup;
       });
       const selectActiveKeys = Object.keys(activeKey);
       if (!findKey || selectActiveKeys.length === 0) {
@@ -425,12 +429,6 @@ export default {
     }
   },
   methods: {
-    arrayIsEqual(array1, array2) {
-      return (
-        array1.length === array2.length &&
-        array1.every(v => array2.includes(Number(v)))
-      );
-    },
     disabledKey(attribute_value_id) {
       const attrSameKey = Object.values(this.skuListMap.attrSameKey);
       const selectKeys = Object.values(this.activeKey);
@@ -457,17 +455,15 @@ export default {
       const { existSkuIdKey } = this.skuListMap;
       // 取出 attribute_value_id
       const existSkuGroup = Object.keys(existSkuIdKey);
+      // 去除与当前 attribute_value_id 匹配的同组数据
+      const aloneKeys = selectKeys.filter(key => {
+        return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
+      });
+      const currentGroup = [...aloneKeys, attribute_value_id];
+      const attrGroup = currentGroup.sort((a, b) => a - b).join("|");
       // 判断是否存在 SKU 组中
-      const hasInSku = existSkuGroup.some(arr => {
-        const attrGroup = arr.split("|");
-        // 去除与当前 attribute_value_id 匹配的同组数据
-        const aloneKeys = selectKeys.filter(key => {
-          return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
-        });
-
-        return this.arrayIsEqual(attrGroup, [
-          ...new Set([...aloneKeys, attribute_value_id])
-        ]);
+      const hasInSku = existSkuGroup.some(skuGroup => {
+        return attrGroup === skuGroup;
       });
 
       // 不在存在 sku 中
