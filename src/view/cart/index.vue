@@ -507,6 +507,7 @@ export default {
   box-shadow: 0px 2px 10px 0px rgba(93, 153, 240, 0.16);
   border-radius: 2px;
   margin-bottom: 8px;
+  background-color: #fff;
 }
 
 .cart-card-container + .cart-card-container {
