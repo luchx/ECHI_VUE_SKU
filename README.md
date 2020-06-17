@@ -254,9 +254,9 @@ skuListMap() {
     const { sku_prop } = list;
     // 获取属性组的 attribute_value_id，排序后用 | 分割
     const attrsIdKeys = (sku_prop || [])
-    .map(item => item.attribute_value_id)
-    .sort((a, b) => a - b)
-    .join("|");
+      .map(item => item.attribute_value_id)
+      .sort((a, b) => a - b)
+      .join("|");
 
     existSkuIdKey[attrsIdKeys] = list;
 
@@ -443,11 +443,11 @@ skuListMap() {
 
 ## 三、SKU 禁用判断
 
-> 校验规则：
+> 禁用规则说明：
 >
-> 1. 当选项小于当前 SKU 项 - 1，不禁用选项
-> 1. 同一属性组的选项不禁用
-> 1. 满足匹配条件，则通过 existSkuIdKey 进行匹配
+>1. 存在选项且小于可选项，不满足匹配规则
+>2. 存在同组数据，且选项未选完
+>3. 不在存在 sku 中
 
 ```javascript
 // 在 methods 中定义一个方法，接受一个 attribute_value_id 进行判断，并返回 Boolean
@@ -460,14 +460,14 @@ disabledKey(attribute_value_id) {
   if (selectKeys.length < validLen - 1) {
     return false;
   }
-  // 获取同组数据
+  // 获取选项中属于同组的数据
   const filterSameKey = attrSameKey.filter(arr => {
     return selectKeys.find(key => arr.includes(key));
   });
 
-  // 获取同组数据
+  // 获取同一属性组数据
   const sameGroupKey = filterSameKey.filter(arr =>
-   arr.includes(attribute_value_id)
+    arr.includes(attribute_value_id)
   );
 
   // 存在同组数据，且选项未选完
@@ -475,19 +475,16 @@ disabledKey(attribute_value_id) {
     return false;
   }
 
-  const { existSkuIdKey } = this.skuListMap;
   // 取出 attribute_value_id
-  const existSkuGroup = Object.keys(existSkuIdKey);
+  const { existSkuIdKey } = this.skuListMap;
   // 去除与当前 attribute_value_id 匹配的同组数据
   const aloneKeys = selectKeys.filter(key => {
     return !sameGroupKey.some(sameKeys => sameKeys.includes(key));
   });
-  const currentGroup = [...aloneKeys, attribute_value_id];
-  const attrGroup = currentGroup.sort((a, b) => a - b).join("|");
+  const selectSkuGroup = [...aloneKeys, attribute_value_id];
+  const skuKeyGroup = selectSkuGroup.sort((a, b) => a - b).join("|");
   // 判断是否存在 SKU 组中
-  const hasInSku = existSkuGroup.some(skuGroup => {
-    return attrGroup === skuGroup;
-  });
+  const hasInSku = Reflect.has(existSkuIdKey, skuKeyGroup);
 
   // 不在存在 sku 中
   return !hasInSku;
@@ -532,30 +529,17 @@ validateCartStatus() {
   // 当前选中的 sku 属性
   const activeKey = this.activeKey;
   const { existSkuIdKey } = this.skuListMap;
-  // 取出 attribute_value_id 以 | 分割, 一维数组,
-  const existSkuGroup = Object.keys(existSkuIdKey);
-  // 取出当前选中的 sku 组，一维数组
-  const values = Object.values(activeKey);
-  // 判断是否存在 sku_prop 中
-  const findKey = existSkuGroup.find(skuGroup => {
-    const attrGroup = values.sort((a, b) => a - b).join("|");
-    return attrGroup === skuGroup;
-  });
-  const selectActiveKeys = Object.keys(activeKey);
-  if (!findKey || selectActiveKeys.length === 0) {
-    return {
-      status: false,
-      params: {}
-    };
-  }
+  // 取出当前选中的 sku 组
+  const selectSkuGroup = Object.values(activeKey);
 
+  const skuKeyGroup = selectSkuGroup.sort((a, b) => a - b).join("|");
   // 获取当前 sku_id 对应的属性组
-  const findSkuItem = existSkuIdKey[findKey];
-  // 判断是否可售
-  if (findSkuItem.can_sell === 0) {
+  const findSkuItem = Reflect.get(existSkuIdKey, skuKeyGroup);
+
+  const selectActiveKeys = Object.keys(activeKey);
+  if (!findSkuItem || selectActiveKeys.length === 0) {
     return {
       status: false,
-      title: "区域不可售",
       params: {}
     };
   }
